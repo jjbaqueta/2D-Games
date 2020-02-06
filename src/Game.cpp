@@ -2,11 +2,14 @@
 #include "./Constants.h"
 #include "./Game.h"
 
-// Global variables used to set rectangle position and its move speed
+/* Global variables used to set rectangle position and its move speed
+ * The value of velocity parameter must be defined in pixel per frame
+ * Velocity: in how many pixels is object going to move since current frame up to next frame?
+ */
 float projectilePosX = 0.0f;
 float projectilePosY = 0.0f;
-float projectileVelX = 0.25f;
-float projectileVelY = 0.25f;
+float projectileVelX = 50.0f;
+float projectileVelY = 60.0f;
 
 Game::Game()
 {
@@ -84,9 +87,27 @@ void Game::processingInput()
 
 void Game::update()
 {
-	// Updating X and Y positions according to velocities parameters
-	projectilePosX += projectileVelX;
-	projectilePosY += projectileVelY;
+	// Wait until 16ms has ellapsed since the last frame (for faster machines)
+	while(!SDL_TICKS_PASSED(SDL_GetTicks(), ticksLastFrame + FRAME_TARGET_TIME));
+
+	/* 
+	 * Delta time is the difference in ticks from last frame converted to seconds
+	 * It represents the time passed since the last frame updating until now (in seconds)
+	 */
+	float deltaTime = (SDL_GetTicks() - ticksLastFrame) / 1000.0f;
+
+	// Clamp deltaTime to a maximum value (for slower  machines)
+	deltaTime = (deltaTime > 0.05f) ? 0.05 : deltaTime;
+
+	// Update ticksLastFrame with current frame time
+	ticksLastFrame = SDL_GetTicks();
+
+	/*
+	 * The objects are going to move according to an elapsed time, 
+	 * instead to use the clock cycle from computer
+	 */
+	projectilePosX += projectileVelX * deltaTime;
+	projectilePosY += projectileVelY * deltaTime;
 }
 
 void Game::render()
@@ -97,7 +118,7 @@ void Game::render()
 	// Cleaning the current visualization
 	SDL_RenderClear(renderer);
 
-	// Creating a small white rectangle which going to move through screen
+	// Creating a small white rectangle which is going to move through screen
 	SDL_Rect rectangle;
 
 	rectangle.x = (int) projectilePosX;
